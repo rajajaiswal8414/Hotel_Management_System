@@ -1,10 +1,30 @@
 package com.hotelbooking.airbnb.service;
 
 import com.hotelbooking.airbnb.dto.HotelDto;
-import com.hotelbooking.airbnb.entity.Hotel;
+import com.hotelbooking.airbnb.dto.HotelInfoDto;
+import com.hotelbooking.airbnb.dto.HotelSearchRequest;
+import lombok.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 public interface HotelService {
-    Hotel createNewHotel(HotelDto hotelDto);
+    HotelDto createNewHotel(HotelDto hotelDto);
 
-    Hotel getHotelById(Long id);
+    HotelDto getHotelById(Long id);
+
+    HotelDto updateHotelById(Long id, HotelDto hotelDto);
+
+    void deleteHotelById(Long id);
+
+    void activateHotel(Long hotelId);
+
+    List<HotelDto> getAllHotels();
+
+
+    Page<@NonNull HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest);
+
+
+    HotelInfoDto getHotelInfoById(Long hotelId);
 }

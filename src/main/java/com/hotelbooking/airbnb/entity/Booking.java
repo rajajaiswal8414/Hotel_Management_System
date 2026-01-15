@@ -2,29 +2,32 @@ package com.hotelbooking.airbnb.entity;
 
 import com.hotelbooking.airbnb.entity.enums.BookingStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Setter
 @Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hotel_id", updatable = false)
+    @JoinColumn(name = "hotel_id", nullable = false)
     private Hotel hotel;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", updatable = false)
+    @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -46,19 +49,16 @@ public class Booking {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id")
+    @OneToOne(mappedBy = "booking")
     private Payment payment;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BookingStatus bookingStatus;
 
-    @ManyToMany
-    @JoinTable(
-            name = "booking_guest",
-            joinColumns = @JoinColumn(name = "booking_id"),
-            inverseJoinColumns = @JoinColumn(name = "guest_id")
-    )
-    private Set<Guest> guests;
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Guest> guests;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal amount;
 }

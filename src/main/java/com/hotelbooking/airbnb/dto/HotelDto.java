@@ -3,7 +3,6 @@ package com.hotelbooking.airbnb.dto;
 import com.hotelbooking.airbnb.entity.HotelContactInfo;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -20,10 +19,12 @@ public class HotelDto {
     @NotBlank(message = "City is required")
     private String city;
 
-    @NotEmpty(message = "At least one photo is required")
+    @NotNull(message = "Photos cannot be null")
+    @Size(min = 1, message = "At least one photo is required")
     private String[] photos;
 
-    @NotEmpty(message = "At least one amenity is required")
+    @NotNull(message = "Amenities cannot be null")
+    @Size(min = 1, message = "At least one amenity is required")
     private String[] amenities;
 
     @NotNull(message = "Contact information is required")
