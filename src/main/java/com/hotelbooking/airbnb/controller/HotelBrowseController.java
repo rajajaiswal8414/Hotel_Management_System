@@ -3,6 +3,7 @@ package com.hotelbooking.airbnb.controller;
 
 import com.hotelbooking.airbnb.dto.HotelDto;
 import com.hotelbooking.airbnb.dto.HotelInfoDto;
+import com.hotelbooking.airbnb.dto.HotelPriceProjection;
 import com.hotelbooking.airbnb.dto.HotelSearchRequest;
 import com.hotelbooking.airbnb.service.HotelService;
 import jakarta.validation.Valid;

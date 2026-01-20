@@ -23,6 +23,8 @@ public class HotelSearchRequest {
     @Min(1)
     private Integer roomsCount;
 
+    private Integer adults;
+
     private Integer pageNumber = 0;
     private Integer pageSize = 10;
 }

@@ -39,11 +39,11 @@ public class Hotel {
     private HotelContactInfo contactInfo;
 
     @Column(nullable = false)
-    private boolean active;
+    private Boolean active;
 
     @ManyToOne
     private User owner;
 
     @OneToMany(mappedBy = "hotel")
-    private List<Room> room;
+    private List<Room> rooms;
 }

@@ -1,5 +1,7 @@
 package com.hotelbooking.airbnb.repository;
 
+import com.hotelbooking.airbnb.dto.HotelDto;
+import com.hotelbooking.airbnb.dto.HotelPriceProjection;
 import com.hotelbooking.airbnb.entity.Hotel;
 import com.hotelbooking.airbnb.entity.Inventory;
 import com.hotelbooking.airbnb.entity.Room;
@@ -25,21 +27,39 @@ public interface InventoryRepository extends JpaRepository<@NonNull Inventory, @
     boolean existsByRoom(Room room);
 
     @Query("""
-            SELECT DISTINCT i.hotel
-            FROM Inventory i
-            WHERE i.city = :city
-                AND i.date BETWEEN :startDate AND :endDate
-                AND i.closed = FALSE
-                AND (i.totalCount - i.bookedCount - i.reservedCount) >= :roomsCount
-            Group BY i.hotel, i.room
-            HAVING COUNT(i.date) = :dateCount
-            """)
-    Page<@NonNull Hotel> findHotelsWithAvailableInventory(
+    SELECT
+        i.hotel.id as id,
+        i.hotel.name as name,
+        i.hotel.city as city,
+        i.hotel.photos as photos,
+        i.hotel.amenities as amenities,
+        i.hotel.contactInfo as contactInfo,
+        i.hotel.active as active,
+        MIN(r.basePrice) as minPrice
+    FROM Inventory i
+    JOIN i.room r
+    WHERE i.city = :city
+        AND i.date BETWEEN :startDate AND :endDate
+        AND i.closed = FALSE
+        AND (
+            i.totalCount - i.bookedCount - i.reservedCount >=
+            CASE
+                WHEN :requestedRooms > ( (:totalGuests + r.capacity - 1) / r.capacity )
+                THEN :requestedRooms
+                ELSE ( (:totalGuests + r.capacity - 1) / r.capacity )
+            END
+        )
+    GROUP BY i.hotel.id, i.hotel.name, i.hotel.city, i.hotel.photos,
+             i.hotel.amenities, i.hotel.contactInfo, i.hotel.active
+    HAVING COUNT(DISTINCT i.date) = :numberOfNights
+""")
+    Page<@NonNull HotelPriceProjection> findHotelsWithAvailableInventory(
             @Param("city") String city,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("roomsCount") Integer roomsCount,
-            @Param("dateCount") Long dateCount,
+            @Param("requestedRooms") Integer requestedRooms,
+            @Param("totalGuests") Integer totalGuests,
+            @Param("numberOfNights") Long numberOfNights,
             Pageable pageable
     );
 

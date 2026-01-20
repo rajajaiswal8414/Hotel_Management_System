@@ -4,7 +4,6 @@ import com.hotelbooking.airbnb.dto.HotelDto;
 import com.hotelbooking.airbnb.dto.HotelInfoDto;
 import com.hotelbooking.airbnb.dto.HotelSearchRequest;
 import lombok.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 
 import java.util.List;

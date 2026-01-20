@@ -38,7 +38,7 @@ public class RoomServiceImpl implements RoomService {
         room.setHotel(hotel);
         roomRepository.save(room);
 
-        if(room.getHotel().isActive() && !inventoryRepository.existsByRoom(room)){
+        if(room.getHotel().getActive() && !inventoryRepository.existsByRoom(room)){
             inventoryService.initializeRoomForYear(room);
         }
 

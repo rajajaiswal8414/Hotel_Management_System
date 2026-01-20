@@ -1,9 +1,6 @@
 package com.hotelbooking.airbnb.service.impl;
 
-import com.hotelbooking.airbnb.dto.HotelDto;
-import com.hotelbooking.airbnb.dto.HotelInfoDto;
-import com.hotelbooking.airbnb.dto.HotelSearchRequest;
-import com.hotelbooking.airbnb.dto.RoomDto;
+import com.hotelbooking.airbnb.dto.*;
 import com.hotelbooking.airbnb.entity.Hotel;
 import com.hotelbooking.airbnb.entity.Room;
 import com.hotelbooking.airbnb.exception.ResourceNotFoundException;
@@ -55,17 +52,34 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     public Page<@NonNull HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest) {
-        Pageable pageable = PageRequest.of(hotelSearchRequest.getPageNumber(),hotelSearchRequest.getPageSize());
-        long dateCount = ChronoUnit.DAYS.between(hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate()) + 1;
+        log.info("Searching hotels for {} city, from {} to {}",
+                hotelSearchRequest.getCity(), hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate());
 
-        Page<@NonNull Hotel> hotelPage = inventoryRepository.findHotelsWithAvailableInventory(hotelSearchRequest.getCity(),
+        Pageable pageable = PageRequest.of(hotelSearchRequest.getPageNumber(), hotelSearchRequest.getPageSize());
+        long numberOfNights = ChronoUnit.DAYS.between(hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate());
+
+        Page<@NonNull HotelPriceProjection> projectionPage = inventoryRepository.findHotelsWithAvailableInventory(
+                hotelSearchRequest.getCity(),
                 hotelSearchRequest.getStartDate(),
-                hotelSearchRequest.getEndDate(),
+                hotelSearchRequest.getEndDate().minusDays(1),
                 hotelSearchRequest.getRoomsCount(),
-                dateCount,
+                hotelSearchRequest.getAdults(),
+                numberOfNights,
                 pageable
         );
-        return hotelPage.map(hotel -> modelMapper.map(hotel, HotelDto.class));
+
+        return projectionPage.map(p -> {
+            HotelDto dto = new HotelDto();
+            dto.setId(p.getId());
+            dto.setName(p.getName());
+            dto.setCity(p.getCity());
+            dto.setPhotos(p.getPhotos());
+            dto.setAmenities(p.getAmenities());
+            dto.setContactInfo(p.getContactInfo());
+            dto.setActive(p.getActive());
+            dto.setMinPrice(p.getMinPrice());
+            return dto;
+        });
     }
 
     @Override
@@ -74,7 +88,7 @@ public class HotelServiceImpl implements HotelService {
                 .findById(hotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel", "hotelId", hotelId));
 
-        List<RoomDto> rooms = hotel.getRoom()
+        List<RoomDto> rooms = hotel.getRooms()
                 .stream().map((element) -> modelMapper.map(element, RoomDto.class))
                 .toList();
         return new HotelInfoDto(modelMapper.map(hotel, HotelDto.class), rooms);
@@ -100,7 +114,7 @@ public class HotelServiceImpl implements HotelService {
         hotel.setName(hotelDto.getName());
         hotel.setAmenities(hotelDto.getAmenities());
         hotel.setPhotos(hotelDto.getPhotos());
-        hotel.setActive(hotelDto.isActive());
+        hotel.setActive(hotelDto.getActive());
         hotel.setContactInfo(hotelDto.getContactInfo());
         hotelRepository.save(hotel);
         return modelMapper.map(hotel, HotelDto.class);
@@ -112,7 +126,7 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel", "hotelId", hotelId));
 
-        for (Room room : hotel.getRoom()) {
+        for (Room room : hotel.getRooms()) {
             inventoryService.deleteAllInventories(room);
             roomRepository.delete(room);
         }
@@ -128,10 +142,10 @@ public class HotelServiceImpl implements HotelService {
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel", "hotelId", hotelId));
         hotel.setActive(true);
 
-        log.info("Activating the hotel: {}", hotel.isActive());
+        log.info("Activating the hotel: {}", hotel.getActive());
 
 
-        for(Room room : hotel.getRoom()){
+        for(Room room : hotel.getRooms()){
             if (!inventoryRepository.existsByRoom(room)) {
                 inventoryService.initializeRoomForYear(room);
             }

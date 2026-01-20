@@ -60,8 +60,6 @@ public class BookingServiceImpl implements BookingService {
         }
         inventoryRepository.saveAll(inventoryList);
 
-
-
         //TODO: Dynamic Price Model
         BigDecimal amount = room.getBasePrice()
                 .multiply(BigDecimal.valueOf(daysCount))
