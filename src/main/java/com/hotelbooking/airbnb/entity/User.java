@@ -2,8 +2,12 @@ package com.hotelbooking.airbnb.entity;
 
 import com.hotelbooking.airbnb.entity.enums.Role;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 
@@ -20,11 +24,12 @@ public class User {
     private String email;
 
     @Column(updatable = false)
-    private Integer password;
+    private String password;
 
+    @Column(nullable = false)
     private String name;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private Set<Role> role;
+    private Set<Role> roles;
 }

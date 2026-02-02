@@ -1,6 +1,6 @@
 package com.hotelbooking.airbnb.controller;
 
-import com.hotelbooking.airbnb.dto.BookingDto;
+import com.hotelbooking.airbnb.dto.BookingResponseDto;
 import com.hotelbooking.airbnb.dto.BookingRequestDto;
 import com.hotelbooking.airbnb.dto.GuestDto;
 import com.hotelbooking.airbnb.service.BookingService;
@@ -18,12 +18,12 @@ public class HotelBookingController {
     private final BookingService bookingService;
 
     @PostMapping("/init")
-    public ResponseEntity<@NonNull BookingDto> initializeBooking(@RequestBody BookingRequestDto bookingRequestDto){
+    public ResponseEntity<@NonNull BookingResponseDto> initializeBooking(@RequestBody BookingRequestDto bookingRequestDto){
         return ResponseEntity.ok(bookingService.initializeBooking(bookingRequestDto));
     }
 
     @PostMapping("/{bookingId}/add-guests")
-    public ResponseEntity<@NonNull BookingDto> addGuests(@PathVariable Long bookingId, @RequestBody List<GuestDto> guestDtoList){
+    public ResponseEntity<@NonNull BookingResponseDto> addGuests(@PathVariable Long bookingId, @RequestBody List<GuestDto> guestDtoList){
         return ResponseEntity.ok(bookingService.addGuests(bookingId, guestDtoList));
     }
 }

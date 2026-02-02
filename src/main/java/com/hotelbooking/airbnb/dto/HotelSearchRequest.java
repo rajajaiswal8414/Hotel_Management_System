@@ -19,12 +19,6 @@ public class HotelSearchRequest {
     @NotNull
     private LocalDate endDate;
 
-    @NotNull
-    @Min(1)
-    private Integer roomsCount;
-
-    private Integer adults;
-
     private Integer pageNumber = 0;
     private Integer pageSize = 10;
 }

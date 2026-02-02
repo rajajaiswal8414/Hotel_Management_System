@@ -34,19 +34,4 @@ public class HotelDto {
     private HotelContactInfo contactInfo;
 
     private Boolean active;
-
-    private Double minPrice;
-
-    public HotelDto(Long id, String name, String city, String[] photos,
-                    String[] amenities, HotelContactInfo contactInfo,
-                    Boolean active, Double minPrice) {
-        this.id = id;
-        this.name = name;
-        this.city = city;
-        this.photos = photos;
-        this.amenities = amenities;
-        this.contactInfo = contactInfo;
-        this.active = active;
-        this.minPrice = minPrice;
-    }
 }

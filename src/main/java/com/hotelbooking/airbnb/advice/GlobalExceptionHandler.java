@@ -2,10 +2,13 @@ package com.hotelbooking.airbnb.advice;
 
 import com.hotelbooking.airbnb.exception.APIException;
 import com.hotelbooking.airbnb.exception.ResourceNotFoundException;
+import io.jsonwebtoken.JwtException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -49,6 +52,36 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(new ApiResponse<>(apiError), exception.getHttpStatus());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<@NonNull ApiResponse<?>> handleAuthenticationException(
+            org.springframework.security.core.AuthenticationException exception) {
+
+        log.warn("Authentication failed: {}", exception.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ApiResponse<?>> handleExpiredJwt(JwtException exception) {
+
+        log.warn("JWT expired: {}", exception.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<?>> handleAccessDenied(AccessDeniedException ex){
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "Access denied", null);
     }
 
     private ResponseEntity<@NonNull ApiResponse<?>> buildErrorResponse(HttpStatus status, String message, List<ApiError.FieldError> subErrors) {

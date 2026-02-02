@@ -51,38 +51,6 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    public Page<@NonNull HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest) {
-        log.info("Searching hotels for {} city, from {} to {}",
-                hotelSearchRequest.getCity(), hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate());
-
-        Pageable pageable = PageRequest.of(hotelSearchRequest.getPageNumber(), hotelSearchRequest.getPageSize());
-        long numberOfNights = ChronoUnit.DAYS.between(hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate());
-
-        Page<@NonNull HotelPriceProjection> projectionPage = inventoryRepository.findHotelsWithAvailableInventory(
-                hotelSearchRequest.getCity(),
-                hotelSearchRequest.getStartDate(),
-                hotelSearchRequest.getEndDate().minusDays(1),
-                hotelSearchRequest.getRoomsCount(),
-                hotelSearchRequest.getAdults(),
-                numberOfNights,
-                pageable
-        );
-
-        return projectionPage.map(p -> {
-            HotelDto dto = new HotelDto();
-            dto.setId(p.getId());
-            dto.setName(p.getName());
-            dto.setCity(p.getCity());
-            dto.setPhotos(p.getPhotos());
-            dto.setAmenities(p.getAmenities());
-            dto.setContactInfo(p.getContactInfo());
-            dto.setActive(p.getActive());
-            dto.setMinPrice(p.getMinPrice());
-            return dto;
-        });
-    }
-
-    @Override
     public HotelInfoDto getHotelInfoById(Long hotelId) {
         Hotel hotel = hotelRepository
                 .findById(hotelId)

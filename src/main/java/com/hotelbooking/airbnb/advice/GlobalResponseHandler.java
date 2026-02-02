@@ -1,5 +1,6 @@
 package com.hotelbooking.airbnb.advice;
 
+import org.jspecify.annotations.NullMarked;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -11,6 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 
 @RestControllerAdvice
+@NullMarked
 public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {

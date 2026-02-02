@@ -1,6 +1,6 @@
 package com.hotelbooking.airbnb.service.impl;
 
-import com.hotelbooking.airbnb.dto.BookingDto;
+import com.hotelbooking.airbnb.dto.BookingResponseDto;
 import com.hotelbooking.airbnb.dto.BookingRequestDto;
 import com.hotelbooking.airbnb.dto.GuestDto;
 import com.hotelbooking.airbnb.entity.*;
@@ -33,7 +33,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingDto initializeBooking(BookingRequestDto bookingRequestDto) {
+    public BookingResponseDto initializeBooking(BookingRequestDto bookingRequestDto) {
         log.info("Initialising booking for hotel : {}, room: {}, date {}-{}", bookingRequestDto.getHotelId(),
                 bookingRequestDto.getRoomId(), bookingRequestDto.getCheckInDate(),
                 bookingRequestDto.getCheckOutDate());
@@ -43,6 +43,12 @@ public class BookingServiceImpl implements BookingService {
 
         Room room = roomRepository.findById(bookingRequestDto.getRoomId())
                 .orElseThrow(() -> new ResourceNotFoundException("Room", "roomId", bookingRequestDto.getRoomId()));
+
+        if (!bookingRequestDto.getCheckOutDate().isAfter(bookingRequestDto.getCheckInDate())) {
+            throw new APIException(
+                    "Check-out date must be after check-in date"
+            );
+        }
 
         List<Inventory> inventoryList = inventoryRepository.findAndLockAvailableInventory(room.getId(),
                 bookingRequestDto.getCheckInDate(), bookingRequestDto.getCheckOutDate(), bookingRequestDto.getRoomsCount());
@@ -78,12 +84,12 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         booking = bookingRepository.save(booking);
-        return modelMapper.map(booking, BookingDto.class);
+        return modelMapper.map(booking, BookingResponseDto.class);
     }
 
     @Override
     @Transactional
-    public BookingDto addGuests(Long bookingId, List<GuestDto> guestDtoList) {
+    public BookingResponseDto addGuests(Long bookingId, List<GuestDto> guestDtoList) {
         log.info("Adding guests for booking with ID: {}", bookingId);
 
         Booking booking = bookingRepository.findById(bookingId)
@@ -109,7 +115,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setBookingStatus(BookingStatus.GUESTS_ADDED);
         bookingRepository.save(booking);
 
-        return modelMapper.map(booking, BookingDto.class);
+        return modelMapper.map(booking, BookingResponseDto.class);
     }
 
     public boolean hasBookingExpired(Booking booking){

@@ -1,6 +1,7 @@
 package com.hotelbooking.airbnb.exception;
 
 import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 @NoArgsConstructor
 public class ResourceNotFoundException extends RuntimeException{

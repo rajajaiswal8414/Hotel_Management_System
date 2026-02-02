@@ -21,9 +21,5 @@ public interface HotelService {
 
     List<HotelDto> getAllHotels();
 
-
-    Page<@NonNull HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest);
-
-
     HotelInfoDto getHotelInfoById(Long hotelId);
 }

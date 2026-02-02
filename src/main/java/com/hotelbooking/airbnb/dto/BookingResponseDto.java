@@ -1,13 +1,12 @@
 package com.hotelbooking.airbnb.dto;
 
-import com.hotelbooking.airbnb.entity.*;
 import com.hotelbooking.airbnb.entity.enums.BookingStatus;
 import lombok.Data;
 import java.time.LocalDate;
 import java.util.Set;
 
 @Data
-public class BookingDto {
+public class BookingResponseDto {
 
     private Long id;
 
@@ -23,7 +22,8 @@ public class BookingDto {
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
 
-    private Long paymentId;
+//    private Long paymentId;
+
     private BookingStatus bookingStatus;
 
     private Set<GuestDto> guests;
