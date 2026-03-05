@@ -21,6 +21,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<@NonNull ApiResponse<?>> handleResourceNotFound(ResourceNotFoundException exception){
+        log.warn("Resource not found: {}", exception.getMessage());
         return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), null);
     }
 
@@ -45,13 +46,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(APIException.class)
-    public ResponseEntity<@NonNull ApiResponse<?>> handleAPIException(APIException exception) {
-        ApiError apiError = ApiError.builder()
-                .status(exception.getHttpStatus())
-                .message(exception.getMessage())
-                .build();
-
-        return new ResponseEntity<>(new ApiResponse<>(apiError), exception.getHttpStatus());
+    public ResponseEntity<@NonNull ApiResponse<?>> handleAPIException(APIException ex) {
+        log.warn("API Exception: {}", ex.getMessage());
+        return buildErrorResponse(ex.getHttpStatus(), ex.getMessage(), null);
     }
 
     @ExceptionHandler(AuthenticationException.class)

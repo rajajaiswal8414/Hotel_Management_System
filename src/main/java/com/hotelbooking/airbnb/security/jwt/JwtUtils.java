@@ -40,10 +40,11 @@ public class JwtUtils {
         return null;
     }
 
-    public String generateToken(UserDetailsImpl user){
+    public String generateAccessToken(UserDetailsImpl user){
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
+                .claim("type", "access")
                 .claim("roles", user.getAuthorities()
                         .stream()
                         .map(GrantedAuthority::getAuthority)
@@ -54,9 +55,10 @@ public class JwtUtils {
                 .compact();
     }
 
-    public String generateRefreshToken(UserDetailsImpl user){
+    public String generateRefreshToken(UserDetailsImpl user) {
         return Jwts.builder()
                 .subject(user.getId().toString())
+                .claim("type", "refresh")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
                 .signWith(getSecretKey())
@@ -76,13 +78,41 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
-    public void validateJwtToken(String authToken) {
+    public void validateAccessToken(String token) {
 
-        logger.debug("Validating JWT token");
-
-        Jwts.parser()
-                .verifyWith(getSecretKey())   // no cast
+        Claims claims = Jwts.parser()
+                .verifyWith(getSecretKey())
                 .build()
-                .parseSignedClaims(authToken);
+                .parseSignedClaims(token)
+                .getPayload();
+
+        if (!"access".equals(claims.get("type"))) {
+            throw new JwtException("Invalid access token");
+        }
+    }
+
+    public boolean validateRefreshToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            return "refresh".equals(claims.get("type"));
+
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public Long getUserIdFromRefreshToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return Long.parseLong(claims.getSubject());
     }
 }

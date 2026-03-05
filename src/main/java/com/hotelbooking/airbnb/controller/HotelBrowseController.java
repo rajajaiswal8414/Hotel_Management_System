@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/hotels")
@@ -28,6 +30,11 @@ public class HotelBrowseController {
     @GetMapping("/{hotelId}/info")
     public ResponseEntity<@NonNull HotelInfoDto> getHotelInfo(@PathVariable Long hotelId){
         return ResponseEntity.ok(hotelService.getHotelInfoById(hotelId));
+    }
+
+    @GetMapping
+    public ResponseEntity<@NonNull List<HotelDto>> getAllHotels(){
+        return ResponseEntity.ok(hotelService.getAllHotels());
     }
 
 }

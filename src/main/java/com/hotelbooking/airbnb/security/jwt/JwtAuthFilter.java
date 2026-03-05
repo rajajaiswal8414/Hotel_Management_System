@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -49,7 +50,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (jwt != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                jwtUtils.validateJwtToken(jwt);
+                jwtUtils.validateAccessToken(jwt);
                 Long userId = jwtUtils.getUserIdFromToken(jwt);
 
                 UserDetails userDetails =
@@ -69,7 +70,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
 
-        } catch (Exception e) {
+        } catch (JwtException e) {
             logger.error("JWT authentication failed", e);
             SecurityContextHolder.clearContext();
             exceptionResolver.resolveException(request, response, null, e);

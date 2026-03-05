@@ -8,11 +8,13 @@ import com.hotelbooking.airbnb.entity.enums.BookingStatus;
 import com.hotelbooking.airbnb.exception.APIException;
 import com.hotelbooking.airbnb.exception.ResourceNotFoundException;
 import com.hotelbooking.airbnb.repository.*;
+import com.hotelbooking.airbnb.security.util.AuthUtil;
 import com.hotelbooking.airbnb.service.BookingService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -26,10 +28,12 @@ import java.util.List;
 public class BookingServiceImpl implements BookingService {
     private final GuestRepository guestRepository;
     private final HotelRepository hotelRepository;
+    private final UserRepository userRepository;
     private final RoomRepository roomRepository;
     private final BookingRepository bookingRepository;
     private final InventoryRepository inventoryRepository;
     private final ModelMapper modelMapper;
+    private final AuthUtil authUtil;
 
     @Override
     @Transactional
@@ -49,6 +53,9 @@ public class BookingServiceImpl implements BookingService {
                     "Check-out date must be after check-in date"
             );
         }
+
+        User user = userRepository.findById(authUtil.loggedInUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", authUtil.loggedInUserId()));
 
         List<Inventory> inventoryList = inventoryRepository.findAndLockAvailableInventory(room.getId(),
                 bookingRequestDto.getCheckInDate(), bookingRequestDto.getCheckOutDate(), bookingRequestDto.getRoomsCount());
@@ -79,7 +86,7 @@ public class BookingServiceImpl implements BookingService {
                 .checkInDate(bookingRequestDto.getCheckInDate())
                 .checkOutDate(bookingRequestDto.getCheckOutDate())
                 .roomsCount(bookingRequestDto.getRoomsCount())
-                .user(getCurrentUser())
+                .user(user)
                 .amount(amount)
                 .build();
 
@@ -95,6 +102,10 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", "bookingId", bookingId));
 
+        if (!booking.getUser().getId().equals(authUtil.loggedInUserId())) {
+            throw new APIException(HttpStatus.FORBIDDEN, "You do not have permission to modify this booking");
+        }
+
         if(hasBookingExpired(booking)){
             throw new APIException("Booking has already expired");
         }
@@ -103,10 +114,12 @@ public class BookingServiceImpl implements BookingService {
             throw new APIException("Booking is not under reserved state, cannot add guests");
         }
 
+        User currentUser = userRepository.getReferenceById(authUtil.loggedInUserId());
+
         List<Guest> guests = guestDtoList.stream()
                         .map(guestDto -> {
                             Guest guest = modelMapper.map(guestDto, Guest.class);
-                            guest.setUser(getCurrentUser());
+                            guest.setUser(currentUser);
                             guest.setBooking(booking);
                             return guest;
                         }).toList();
@@ -122,9 +135,4 @@ public class BookingServiceImpl implements BookingService {
         return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());
     }
 
-    public User getCurrentUser(){
-        User user = new User();
-        user.setId(1L);
-        return user;
-    }
 }

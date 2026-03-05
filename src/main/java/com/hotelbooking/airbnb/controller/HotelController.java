@@ -28,11 +28,6 @@ public class HotelController {
         return new ResponseEntity<>(hotel, HttpStatus.CREATED);
     }
 
-    @GetMapping
-    public ResponseEntity<@NonNull List<HotelDto>> getAllHotels(){
-        return ResponseEntity.ok(hotelService.getAllHotels());
-    }
-
     @GetMapping("/{hotelId}")
     public ResponseEntity<@NonNull HotelDto> getHotelById(@PathVariable Long hotelId){
         HotelDto hotelDto = hotelService.getHotelById(hotelId);

@@ -5,11 +5,13 @@ import com.hotelbooking.airbnb.dto.LoginResponseDto;
 import com.hotelbooking.airbnb.dto.SignupRequestDto;
 import com.hotelbooking.airbnb.dto.UserDto;
 import com.hotelbooking.airbnb.entity.User;
+import com.hotelbooking.airbnb.entity.enums.Role;
 import com.hotelbooking.airbnb.exception.APIException;
 import com.hotelbooking.airbnb.repository.UserRepository;
 import com.hotelbooking.airbnb.security.jwt.JwtUtils;
 import com.hotelbooking.airbnb.security.services.UserDetailsImpl;
 import com.hotelbooking.airbnb.service.AuthService;
+import com.hotelbooking.airbnb.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ import java.util.Optional;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+    private final SessionService sessionService;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -45,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User newUser = modelMapper.map(signupRequestDto, User.class);
+        newUser.setRoles(Set.of(Role.Guest));
         newUser.setPassword(passwordEncoder.encode(signupRequestDto.getPassword()));
 
         User savedUser = userRepository.save(newUser);
@@ -71,8 +76,49 @@ public class AuthServiceImpl implements AuthService {
             throw new APIException(HttpStatus.UNAUTHORIZED, "Authentication failed");
         }
 
-        String accessToken = jwtUtils.generateToken(userDetails);
+        String accessToken = jwtUtils.generateAccessToken(userDetails);
+        String refreshToken = jwtUtils.generateRefreshToken(userDetails);
 
-        return new LoginResponseDto(userDetails.getId(), accessToken, null);
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new APIException(HttpStatus.NOT_FOUND, "User not found"));
+
+        sessionService.generateNewSession(user, refreshToken);
+
+        return new LoginResponseDto(userDetails.getId(), accessToken, refreshToken);
     }
+
+    @Override
+    public LoginResponseDto refreshAccessToken(String refreshToken) {
+
+        if (!sessionService.validateSession(refreshToken)) {
+            throw new APIException(HttpStatus.UNAUTHORIZED, "Session expired or logged out from another device");
+        }
+
+        if (!jwtUtils.validateRefreshToken(refreshToken)) {
+            throw new APIException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid refresh token"
+            );
+        }
+
+        Long userId = jwtUtils.getUserIdFromRefreshToken(refreshToken);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new APIException(
+                                HttpStatus.UNAUTHORIZED,
+                                "User not found"
+                        ));
+
+        UserDetailsImpl userDetails = UserDetailsImpl.build(user);
+
+        String newAccessToken = jwtUtils.generateAccessToken(userDetails);
+
+        return new LoginResponseDto(
+                user.getId(),
+                newAccessToken,
+                refreshToken
+        );
+    }
+
 }

@@ -1,12 +1,13 @@
 package com.hotelbooking.airbnb.config;
 
-import com.hotelbooking.airbnb.security.jwt.AuthEntryPointJwt;
+import com.hotelbooking.airbnb.handlers.Oauth2SuccessHandler;
+import com.hotelbooking.airbnb.security.CustomAccessDeniedHandler;
+import com.hotelbooking.airbnb.security.CustomAuthenticationEntryPoint;
 import com.hotelbooking.airbnb.security.jwt.JwtAuthFilter;
 import com.hotelbooking.airbnb.security.services.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -29,7 +30,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class WebSecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
-    private final AuthEntryPointJwt unauthorizedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final Oauth2SuccessHandler oauth2SuccessHandler;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider(
@@ -54,21 +57,18 @@ public class WebSecurityConfig {
         httpSecurity
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
                         // ---------- PUBLIC ----------
                         .requestMatchers(
                                 "/auth/**",
+                                "/home.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers(
-                                HttpMethod.POST, "/hotels/search"
-                        ).permitAll()
-                        .requestMatchers(
-                                HttpMethod.GET, "/hotels/*/info"
-                        ).permitAll()
-
                         // ---------- USER ----------
                         .requestMatchers(
                                 "/bookings/**"
@@ -77,10 +77,10 @@ public class WebSecurityConfig {
                         // ---------- ADMIN ----------
                         .requestMatchers(
                                 "/admin/**"
-                        ).hasRole("ADMIN")
+                        ).hasRole("HOTEL_MANAGER")
 
                         // ---------- EVERYTHING ELSE ----------
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -89,7 +89,10 @@ public class WebSecurityConfig {
                         // Insert our JWT filter BEFORE Spring's standard authentication filter
                         jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class
-                );
+                )
+                .oauth2Login(oauth2config -> oauth2config
+                        .failureUrl("/login?error=true")
+                        .successHandler(oauth2SuccessHandler));
         return httpSecurity.build();
     };
 
