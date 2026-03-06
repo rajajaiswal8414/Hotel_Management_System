@@ -30,8 +30,7 @@ public class HotelBookingController {
 
     @PostMapping("/{bookingId}/payments")
     public ResponseEntity<@NonNull Map<String, String>> initiatePayment(@PathVariable Long bookingId){
-        bookingService.initiatePayments(bookingId)
-        return ResponseEntity.ok();
+        String sessionUrl = bookingService.initiatePayments(bookingId)
+        return ResponseEntity.ok(Map.of("sessionUrl", sessionUrl));
     }
-
 }

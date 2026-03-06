@@ -135,4 +135,10 @@ public class BookingServiceImpl implements BookingService {
         return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());
     }
 
+	@Override
+	public String initiatePayments(Long bookingId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
